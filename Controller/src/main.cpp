@@ -1,59 +1,63 @@
 #include <Arduino.h>
+#include <string.h>
 
-int speedPin = 2;
-int directionPin = A2;
-int updownPin = A1;
+// PIN DEFINES
+#define MotorPin 2
+#define HorizontalPin A2
+#define VerticalPin A1
 
-String beginToken = "%";
-String divider = ":";
-String endToken = "#";
+// DATA DEFINES
+#define StartMarker '@'
+#define PayloadMarker ':'
+#define EndMarker '#'
 
-int val, sensorState, speedVal, directionVal, updownVal, speedAmount;
+#define SpeedProtocol "SPD"
+#define HorizontalProtocol "HRZ"
+#define VerticalProtocol "VER"
 
-unsigned long previousMillis = 0;
-const long interval = 5000;
+// SERIAL DEFINES
+#define BaudRate 115200
+#define MessageDelay 50
 
-void setup() {
-  Serial.begin(9600);
+// CONVERSION DEFINES
+#define UpperAngle 45
+#define LowerAngle -45
+
+bool sensorState;
+int HorizontalTilt, VerticalTilt, Speed;
+
+void setup()
+{
+  Serial.begin(BaudRate);
 }
 
-void loop() {
-  directionVal = analogRead(directionPin);
-  updownVal = analogRead(updownPin);
-
-  
-  CalculateRPM();
+void loop()
+{
+  HorizontalTilt = ReadHorizontalTilt();
+  VerticalTilt = ReadVerticalTilt();
+  Speed = ReadSpeed();
   SendMessage();
-  unsigned long currentMillis = millis();
-
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;
-    SetRPM();
-  }
 }
 
-void CalculateRPM()
+int ReadSpeed() // Will return the speed that the thing is being driven by.
 {
-  val = digitalRead(speedPin);
-       if (val != sensorState) {         
-        if (val == LOW) {               
-          speedAmount++;               
-        }
-      }
-      sensorState = val;
-      Serial.println(speedAmount);
+  return 0;
 }
 
-void SetRPM()
+int ReadHorizontalTilt()
 {
-  speedVal = speedAmount;
-  speedAmount = 0;
+  return map(analogRead(HorizontalPin), 0, 1024, LowerAngle, UpperAngle);
+}
+
+int ReadVerticalTilt()
+{
+  return map(analogRead(VerticalPin), 0, 1024, LowerAngle, UpperAngle);
 }
 
 void SendMessage()
 {
-    Serial.println(beginToken + "Speed" + divider + speedVal + endToken);
-    Serial.println(beginToken + "Direction" + divider + directionVal + endToken);
-    Serial.println(beginToken + "Height" + divider + updownVal + endToken);
-    delay(100);
+  Serial.write(StartMarker + SpeedProtocol  + PayloadMarker + Speed + EndMarker + '\n');
+  Serial.write(StartMarker + HorizontalProtocol + PayloadMarker + HorizontalTilt + EndMarker + '\n');
+  Serial.write(StartMarker + VerticalProtocol + PayloadMarker + VerticalTilt + EndMarker + '\n');
+  delay(MessageDelay);
 }
