@@ -28,30 +28,24 @@ int HorizontalTilt, VerticalTilt, Speed;
 
 void setup()
 {
+  pinMode(MotorPin,INPUT);
+  pinMode(HorizontalPin,INPUT);
+  pinMode(VerticalPin,INPUT);
   Serial.begin(BaudRate);
 }
 
 void loop()
 {
-  HorizontalTilt = ReadHorizontalTilt();
-  VerticalTilt = ReadVerticalTilt();
+  HorizontalTilt = analogRead(HorizontalPin);
+  VerticalTilt = analogRead(VerticalPin);
   Speed = ReadSpeed();
   SendMessage();
 }
 
 int ReadSpeed() // Will return the speed that the thing is being driven by.
 {
+
   return 0;
-}
-
-int ReadHorizontalTilt()
-{
-  return map(analogRead(HorizontalPin), 0, 1024, LowerAngle, UpperAngle);
-}
-
-int ReadVerticalTilt()
-{
-  return map(analogRead(VerticalPin), 0, 1024, LowerAngle, UpperAngle);
 }
 
 void SendMessage()
