@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <string.h>
 
+// TODO: Make sure pins are equal to the ones currently in use, so the client wont have to switch stuff around
+
 // PIN DEFINES
 #define MotorPin 2
 #define HorizontalPin A2
@@ -19,9 +21,12 @@
 #define BaudRate 115200
 #define MessageDelay 50
 
-// CONVERSION DEFINES
-#define UpperAngle 45
-#define LowerAngle -45
+// CYCLING DEFINES
+#define ResetDelay 500
+int lastPing = 0;
+int CycleState = LOW;
+int Rotations = 0;
+
 
 bool sensorState;
 int HorizontalTilt, VerticalTilt, Speed;
@@ -34,24 +39,46 @@ void setup()
   Serial.begin(BaudRate);
 }
 
+
+
+void ReadSpeed() // Will return the speed that the thing is being driven by.
+{
+  int check = digitalRead(MotorPin);
+  if(CycleState != check)
+  {
+    if(check == HIGH)
+    {
+      Rotations++;
+    }
+    CycleState = check;
+  }
+  return;
+}
+
+void ResetRotations()
+{
+  Rotations = 0;
+  lastPing = millis();
+}
+
+void SendMessage(char protocol[], int value)
+{
+  Serial.print(StartMarker);
+  Serial.print(protocol);
+  Serial.print(PayloadMarker);
+  Serial.print(value);
+  Serial.println(EndMarker);
+}
+
 void loop()
 {
   HorizontalTilt = analogRead(HorizontalPin);
   VerticalTilt = analogRead(VerticalPin);
-  Speed = ReadSpeed();
-  SendMessage();
-}
 
-int ReadSpeed() // Will return the speed that the thing is being driven by.
-{
+  ReadSpeed();
+  if(millis() > ResetDelay + lastPing) ResetRotations();
 
-  return 0;
-}
-
-void SendMessage()
-{
-  Serial.write(StartMarker + SpeedProtocol  + PayloadMarker + Speed + EndMarker + '\n');
-  Serial.write(StartMarker + HorizontalProtocol + PayloadMarker + HorizontalTilt + EndMarker + '\n');
-  Serial.write(StartMarker + VerticalProtocol + PayloadMarker + VerticalTilt + EndMarker + '\n');
-  delay(MessageDelay);
+  SendMessage(SpeedProtocol,Speed);
+  SendMessage(HorizontalProtocol,HorizontalTilt);
+  SendMessage(VerticalProtocol,VerticalTilt);
 }
