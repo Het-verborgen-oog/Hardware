@@ -18,7 +18,7 @@
 #define VerticalProtocol "VER"
 
 // SERIAL DEFINES
-#define BaudRate 115200
+#define BaudRate 9600
 #define MessageDelay 50
 
 // CYCLING DEFINES
@@ -68,6 +68,7 @@ void SendMessage(char protocol[], int value)
   Serial.print(PayloadMarker);
   Serial.print(value);
   Serial.println(EndMarker);
+  delay(20);
 }
 
 void loop()
