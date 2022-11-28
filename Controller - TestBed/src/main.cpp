@@ -4,7 +4,7 @@
 // TODO: Make sure pins are equal to the ones currently in use, so the client wont have to switch stuff around
 
 // PIN DEFINES
-#define MotorPin 2
+#define MotorPin A3
 #define HorizontalPin A2
 #define VerticalPin A1
 
@@ -27,6 +27,10 @@ int lastPing = 0;
 int CycleState = LOW;
 int Rotations = 0;
 
+// SPEED DEFINES
+#define MinSpeed 0
+#define MaxSpeed 5
+
 
 bool sensorState;
 int HorizontalTilt, VerticalTilt, Speed;
@@ -38,8 +42,6 @@ void setup()
   pinMode(VerticalPin,INPUT);
   Serial.begin(BaudRate);
 }
-
-
 
 void ReadSpeed() // Will return the speed that the thing is being driven by.
 {
@@ -75,11 +77,11 @@ void loop()
 {
   HorizontalTilt = analogRead(HorizontalPin);
   VerticalTilt = analogRead(VerticalPin);
+  Speed = map(analogRead(MotorPin),0,1023,MinSpeed,MaxSpeed);
 
-  ReadSpeed();
-  if(millis() > ResetDelay + lastPing) ResetRotations();
+  //if(millis() > ResetDelay + lastPing) ResetRotations();
 
-  // SendMessage(SpeedProtocol,Speed);
-  // SendMessage(HorizontalProtocol,HorizontalTilt);
-  // SendMessage(VerticalProtocol,VerticalTilt);
+  SendMessage(SpeedProtocol,Speed);
+  SendMessage(HorizontalProtocol,HorizontalTilt);
+  SendMessage(VerticalProtocol,VerticalTilt);
 }
