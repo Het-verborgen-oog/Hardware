@@ -31,6 +31,11 @@ int Rotations = 0;
 #define MinSpeed 0
 #define MaxSpeed 5
 
+#define VerticalArraySize 5
+#define HorizontalArraySize 15
+
+int VerticalData[VerticalArraySize];
+int HorizontalData[HorizontalArraySize];
 
 bool sensorState;
 int HorizontalTilt, VerticalTilt, Speed;
@@ -73,15 +78,29 @@ void SendMessage(char protocol[], int value)
   delay(20);
 }
 
+int CalculateAverage(int* array, int size, int data)
+{
+  int total = 0;
+  for (int i = 0; i < size - 1; i++)
+  {
+    *array = *(array + 1);
+    total += *array;
+    array++;
+  }
+  *array = data;
+  total += data;
+  return total / size;
+}
+
 void loop()
 {
   HorizontalTilt = analogRead(HorizontalPin);
   VerticalTilt = analogRead(VerticalPin);
   Speed = map(analogRead(MotorPin),0,1023,MinSpeed,MaxSpeed);
 
-  //if(millis() > ResetDelay + lastPing) ResetRotations();
+  if(millis() > ResetDelay + lastPing) ResetRotations();
 
   SendMessage(SpeedProtocol,Speed);
-  SendMessage(HorizontalProtocol,HorizontalTilt);
-  SendMessage(VerticalProtocol,VerticalTilt);
+  SendMessage(HorizontalProtocol,CalculateAverage(&HorizontalData[0],HorizontalArraySize,HorizontalTilt));
+  SendMessage(VerticalProtocol,CalculateAverage(&VerticalData[0],VerticalArraySize,VerticalTilt));
 }

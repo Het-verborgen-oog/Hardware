@@ -4,7 +4,7 @@
 // TODO: Make sure pins are equal to the ones currently in use, so the client wont have to switch stuff around
 
 // PIN DEFINES
-#define MotorPin 2
+#define MotorPin 12
 #define HorizontalPin A2
 #define VerticalPin A1
 
@@ -22,13 +22,16 @@
 #define MessageDelay 50
 
 // CYCLING DEFINES
-#define ResetDelay 500
-int lastPing = 0;
+#define ResetDelay 200
+
+#define VerticalArraySize 5
+#define HorizontalArraySize 15
+
+int VerticalData[VerticalArraySize];
+int HorizontalData[HorizontalArraySize];
+
 int CycleState = LOW;
-int Rotations = 0;
 
-
-bool sensorState;
 int HorizontalTilt, VerticalTilt, Speed;
 
 void setup()
@@ -39,26 +42,41 @@ void setup()
   Serial.begin(BaudRate);
 }
 
+int CalculateAverage(int* array, int size, int data)
+{
+  int total = 0;
+  for (int i = 0; i < size - 1; i++)
+  {
+    *array = *(array + 1);
+    total += *array;
+    array++;
+  }
+  *array = data;
+  total += data;
+  return total / size;
+}
 
+int debug = 0;
 
 void ReadSpeed() // Will return the speed that the thing is being driven by.
 {
   int check = digitalRead(MotorPin);
+
   if(CycleState != check)
   {
-    if(check == LOW)
-    {
-      Rotations++;
-    }
-    CycleState = check;
+      Speed = 5;
+      CycleState = check;
+  }
+  else
+  {
+    Speed = 0;
   }
   return;
 }
 
 void ResetRotations()
 {
-  Rotations = 0;
-  lastPing = millis();
+  Speed = 0;
 }
 
 void SendMessage(char protocol[], int value)
@@ -77,9 +95,8 @@ void loop()
   VerticalTilt = analogRead(VerticalPin);
 
   ReadSpeed();
-  if(millis() > ResetDelay + lastPing) ResetRotations();
 
-  // SendMessage(SpeedProtocol,Speed);
-  // SendMessage(HorizontalProtocol,HorizontalTilt);
-  // SendMessage(VerticalProtocol,VerticalTilt);
+  SendMessage(SpeedProtocol,Speed);
+  SendMessage(HorizontalProtocol,CalculateAverage(&HorizontalData[0],HorizontalArraySize,HorizontalTilt));
+  SendMessage(VerticalProtocol,CalculateAverage(&VerticalData[0],VerticalArraySize,VerticalTilt));
 }
